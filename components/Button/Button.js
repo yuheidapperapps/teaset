@@ -8,7 +8,7 @@ import {StyleSheet, View, Text, TouchableOpacity} from 'react-native';
 
 import Theme from 'teaset/themes/Theme';
 
-export default class Button extends TouchableOpacity {
+export default class Button extends Component {
   
   static propTypes = {
     ...TouchableOpacity.propTypes,
@@ -31,7 +31,9 @@ export default class Button extends TouchableOpacity {
         let fs = StyleSheet.flatten(nextProps.style);
         opacity = fs && (fs.opacity || fs.opacity === 0) ? fs.opacity : 1;
       }
-      this.state.anim.setValue(opacity);
+      if (this.touchable) {
+        this.touchable.setOpacityTo(opacity)
+      }
     }
   }
 
@@ -115,7 +117,10 @@ export default class Button extends TouchableOpacity {
     if (disabled) {
       style.opacity = Theme.btnDisabledOpacity;
     }
-    this.state.anim._value = style.opacity === undefined ? 1 : style.opacity;
+
+    if (this.touchable) {
+      this.touchable.setOpacityTo(style.opacity === undefined ? 1 : style.opacity)
+    }
 
     if (!React.isValidElement(title) && (title || title === '' || title === 0)) {
       titleStyle = [{
@@ -127,11 +132,23 @@ export default class Button extends TouchableOpacity {
     }
     if (title) children = title;
 
-    this.props = {style, type, size, title, titleStyle, activeOpacity, disabled, children, ...others};
+    return {style, type, size, title, titleStyle, activeOpacity, disabled, children, ...others};
   }
 
   render() {
-    this.buildProps();
-    return super.render();
+    let props = this.buildProps();
+
+    return (
+      <TouchableOpacity
+        ref={(r)=>{
+          this.touchable=r;
+          if (r) {
+            let style = StyleSheet.flatten(props.style);
+            let opacity = style.opacity === undefined ? 1 : style.opacity
+            r.setOpacityTo(opacity);
+          }
+        }}
+        {...props}/>
+    )
   }
 }
